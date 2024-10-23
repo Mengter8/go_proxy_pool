@@ -144,7 +144,7 @@ func tunnelUpdate(c *gin.Context) {
 		c.String(200, fmt.Sprintf("{\"code\": 200, \"msg\": \"代理池是空的\"}"))
 	}
 	httpsIp = getHttpsIp()
-	httpIp = gethttpIp()
+	httpIp = getHttpIp()
 	socket5Ip = getSocket5Ip()
 	c.String(200, fmt.Sprintf("{\"code\": 200, \"HTTP\": \"%s\",\"HTTPS\": \"%s\",\"SOCKET5\": \"%s\" }", httpIp, httpsIp, socket5Ip))
 }
