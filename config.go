@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bufio"
-	"encoding/json"
 	"gopkg.in/yaml.v3"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -36,7 +33,7 @@ type Spider struct {
 	Body     string            `yaml:"body" json:"body"`
 	ProxyIs  bool              `yaml:"proxy" json:"proxy"`
 	Headers  map[string]string `yaml:"headers" json:"headers"`
-	Urls     string            `yaml:"urls" json:"urls"`
+	Urls     []string          `yaml:"urls" json:"urls"`
 	Ip       string            `yaml:"ip" json:"ip"`
 	Port     string            `yaml:"port" json:"port"`
 }
@@ -53,33 +50,15 @@ type Proxy struct {
 	Host string `yaml:"host" json:"host"`
 	Port string `yaml:"port" json:"port"`
 }
-type ProxyIp struct {
-	Ip         string //IP地址
-	Port       string //代理端口
-	Country    string //代理国家
-	Province   string //代理省份
-	City       string //代理城市
-	Isp        string //IP提供商
-	Type       string //代理类型
-	Anonymity  string //代理匿名度, 透明：显示真实IP, 普匿：显示假的IP, 高匿：无代理IP特征
-	Time       string //代理验证
-	Speed      string //代理响应速度
-	SuccessNum int    //验证请求成功的次数
-	RequestNum int    //验证请求的次数
-	Source     string //代理源
-}
 
 // 数组去重
 func uniquePI(arr []ProxyIp) []ProxyIp {
+	seen := make(map[string]struct{})
 	var pr []ProxyIp
 	for _, v := range arr {
-		is := true
-		for _, vv := range pr {
-			if v.Ip+v.Port == vv.Ip+vv.Port {
-				is = false
-			}
-		}
-		if is {
+		key := v.IPAddress + v.Port
+		if _, exists := seen[key]; !exists {
+			seen[key] = struct{}{}
 			pr = append(pr, v)
 		}
 	}
@@ -102,28 +81,6 @@ func GetConfigData() {
 		err.Error()
 		return
 	}
-	//导入代理缓存
-	file, err := os.OpenFile("data.json", os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		log.Println("代理json文件打开错误：" + err.Error())
-		err.Error()
-		return
-	}
-	defer file.Close()
-	all, err := io.ReadAll(file)
-	if err != nil {
-		log.Println("代理json解析错误：" + err.Error())
-		return
-	}
-	if len(all) == 0 {
-		return
-	}
-	err = json.Unmarshal(all, &ProxyPool)
-	if err != nil {
-		log.Println("代理json解析错误：" + err.Error())
-		return
-	}
-
 }
 
 // 处理Headers配置
@@ -132,38 +89,4 @@ func SetHeadersConfig(he map[string]string, header *http.Header) *http.Header {
 		header.Add(k, v)
 	}
 	return header
-}
-
-func export() {
-	mux1.Lock()
-	defer mux1.Unlock()
-	//导出代理到文件
-	err := os.Truncate("data.json", 0)
-	if len(ProxyPool) == 0 {
-		return
-	}
-	if err != nil {
-		log.Printf("data.json清理失败：%s", err)
-		return
-	}
-	file, err := os.OpenFile("data.json", os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		log.Printf("data.json打开失败：%s", err)
-		return
-	}
-	defer file.Close()
-
-	data, err := json.Marshal(ProxyPool)
-	if err != nil {
-		log.Printf("代理json化失败：%s", err)
-		return
-	}
-	buf := bufio.NewWriter(file)
-	// 字节写入
-	buf.Write(data)
-	// 将缓冲中的数据写入
-	err = buf.Flush()
-	if err != nil {
-		log.Println("代理json保存失败:", err)
-	}
 }

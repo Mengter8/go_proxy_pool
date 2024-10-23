@@ -1,7 +1,7 @@
 #使用代理去获取代理IP
 proxy:
   host: 127.0.0.1
-  port: 10809
+  port: 20171
 
 #配置信息
 config:
@@ -16,15 +16,19 @@ config:
   #隧道代理更换时间秒
   tunnelTime: 60
   #可用IP数量小于‘proxyNum’时就去抓取
-  proxyNum: 30
+  proxyNum: 300
   #代理IP验证间隔秒
-  verifyTime: 1800
+  verifyTime: 120
   #抓取/检测状态线程数
   threadNum: 200
-
+#存活检测设置
+verify:
+  #检查的URL
+  verifyUrl: 'https://www.google.com'
+  verifyUrlWords: 'Copyright The Closure Library Authors'
 #ip源
 spider:
-  - name: '齐云代理'
+  - name: 'proxy.ip3366.net'
     #请求方式
     method: 'GET'
     #post传参用的请求体
@@ -35,7 +39,8 @@ spider:
     Headers:
       User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
     #获取的地址
-    urls: 'https://proxy.ip3366.net/free/?action=china&page=1,https://proxy.ip3366.net/free/?action=china&page=2,https://proxy.ip3366.net/free/?action=china&page=3'
+    urls:
+      - https://proxy.ip3366.net/free/
     #获取IP的正则表达式，
     ip: '\"IP\">(\d+?\.\d+?.\d+?\.\d+?)</td>'
     #获取端口的正则表达式
@@ -43,107 +48,173 @@ spider:
     #是否使用代理去请求
     proxy: false
 
-  - name: "89代理"
+  - name: "www.ip3366.net"
     method: 'GET'
     Headers:
       User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    urls: "https://www.89ip.cn/index_1.html,https://www.89ip.cn/index_2.html,https://www.89ip.cn/index_3.html"
+    urls:
+      - http://www.ip3366.net/?stype=1&page=1
+      - http://www.ip3366.net/?stype=2&page=1
+      - http://www.ip3366.net/?stype=3&page=1
+      - http://www.ip3366.net/?stype=4&page=1
     ip: '<td>[\s]*?(\d+?\.\d+?.\d+?\.\d+?)[\s]*?</td>'
     port: '<td>[\s]*?\d+?\.\d+?.\d+?\.\d+?[\s]*?</td>[\s]*?<td>[\s]*?(\d+?)[\s]*?</td>'
     proxy: false
 
-  #每天需要跟换地址
-  - name: "开心代理"
+  - name: "www.89ip.cn"
     method: 'GET'
+    interval: 3
     Headers:
       User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    urls: "http://www.kxdaili.com/daili/ip/7713.html"
-    ip: '\[.+?\](\d+?\.\d+?.\d+?\.\d+?):\d+?@.+?#'
-    port: '\[.+?\]\d+?\.\d+?.\d+?\.\d+?:(\d+?)@.+?#'
-    proxy: false
-
-  - name: "快代理"
-    method: 'GET'
-    Headers:
-      User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    urls: "http://www.ip3366.net/?stype=1&page=1,http://www.ip3366.net/?stype=1&page=2,http://www.ip3366.net/?stype=3&page=1,http://www.ip3366.net/?stype=3&page=2"
+    urls:
+      - https://www.89ip.cn/index_1.html
+      - https://www.89ip.cn/index_2.html
+      - https://www.89ip.cn/index_3.html
     ip: '<td>[\s]*?(\d+?\.\d+?.\d+?\.\d+?)[\s]*?</td>'
     port: '<td>[\s]*?\d+?\.\d+?.\d+?\.\d+?[\s]*?</td>[\s]*?<td>[\s]*?(\d+?)[\s]*?</td>'
     proxy: false
 
-  - name: "高可用代理"
+  - name: "api.89ip.cn"
     method: 'GET'
     Headers:
       User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    urls: "https://ip.jiangxianli.com/?page=1"
-    ip: '<td>[\s]*?(\d+?\.\d+?.\d+?\.\d+?)[\s]*?</td>'
-    port: '<td>[\s]*?\d+?\.\d+?.\d+?\.\d+?[\s]*?</td>[\s]*?<td>[\s]*?(\d+?)[\s]*?</td>'
+    urls:
+      - http://api.89ip.cn/tqdl.html?api=1&num=60&port=&address=&isp=
+    ip: '[\s]*?(\d+?\.\d+?.\d+?\.\d+?)[\s]*?:(\d+)<br>'
+    port: '[\s]*?\d+?\.\d+?.\d+?\.\d+?[\s]*?:(\d+)<br>'
     proxy: false
 
-
-  - name: "小舒代理"
+  - name: "www.kuaidaili.com"
     method: 'GET'
     Headers:
       User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    urls: "https://xsdaili.cn/dayProxy/ip/1796.html"
-    ip: '(\d+?\.\d+?.\d+?\.\d+?):\d+?@.+?#\[.+?\]'
-    port: '\d+?\.\d+?.\d+?\.\d+?:(\d+?)@.+?#\[.+?\]'
+    urls:
+      - https://www.kuaidaili.com/free/
+      - https://www.kuaidaili.com/free/fps/
+    ip: '"ip": "(\d+?\.\d+?.\d+?\.\d+?)",'
+    port: '"port": "(\d+?)"},'
     proxy: false
 
-  - name: "命运零代理"
+  - name: "uu-proxy.com"
     method: 'GET'
     Headers:
       User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    urls: "http://proxylist.fatezero.org/proxy.list"
-    ip: '\"host\": \"(.+?)\"'
-    port: '\"port\": (\d+)'
+    urls:
+      - https://uu-proxy.com/api/free
+    ip: '"ip":"(\d+?\.\d+?.\d+?\.\d+?)",'
+    port: '"port":(\d+?),'
     proxy: false
 
-
-  - name: '自由代理'
+  - name: "www.zdaye.com"#阿里云盾
     method: 'GET'
     Headers:
-      #需要使用cookie,不然会有验证
-      User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'
-    urls: "https://www.freeproxylists.net/zh/?c=CN&u=50&page=1"
-    ip: '%3e(.{0,60}?)%3c%2f'
-    port: 'center\">(\d+?)</td><td'
+      User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+    urls:
+      - https://www.zdaye.com/free/?ip=&adr=&checktime=&sleep=&cunhuo=&dengji=&nadr=&https=&yys=&post=&px=
+    ip: '<td>(\d+?\.\d+?.\d+?\.\d+?)</td>'
+    port: '<td>\d+?\.\d+?.\d+?\.\d+?</td>[\s]*?<td>(\d+?)</td>'
+    proxy: false
+
+  - name: "ip.ihuan.me"
+    method: 'GET'
+    interval: 3
+    Headers:
+      User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+    urls:
+      - https://ip.ihuan.me
+      - https://ip.ihuan.me/
+    ip: '.svg">(\d+?\.\d+?.\d+?\.\d+?)</a></td><td>'
+    port: '.svg">\d+?\.\d+?.\d+?\.\d+?</a></td><td>(\d+?)</td>'
+    proxy: false
+
+  - name: "proxydb.net"
+    method: 'POST'
+    body: '{"protocol":"http","protocol":"https","protocol":"socks5"}'
+    Headers:
+      User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+    urls:
+      - https://proxydb.net/list
+    ip: '"ip":"(\d+?\.\d+?.\d+?\.\d+?)",'
+    port: 'port":(\d+?),'
     proxy: true
 
-  - name: "db代理"
-    method: 'GET'
+  - name: "www.proxy-list.download"#cloudflare
+    method: 'POST'
+    body: '{"protocol":"http","protocol":"https","protocol":"socks5"}'
     Headers:
       User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    urls: "http://proxydb.net/?protocol=http&country=CN,http://proxydb.net/?protocol=https&country=CN,http://proxydb.net/?protocol=socks5&country=CN"
-    ip: 'href=\"/(\d+?\.\d+?.\d+?\.\d+?)/\d+?#http.{0,1}\">'
-    port: 'href=\"/\d+?\.\d+?.\d+?\.\d+?/(\d+?)#http.{0,1}\">'
-    proxy: false
-
-
-  - name: "hidemy代理"
-    method: 'GET'
-    Headers:
-      User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    urls: "https://hidemy.name/cn/proxy-list/?maxtime=1000&type=h#list,https://hidemy.name/cn/proxy-list/?maxtime=1000&type=h&start=64#list,https://hidemy.name/cn/proxy-list/?maxtime=1000&type=h&start=128#list,https://hidemy.name/cn/proxy-list/?maxtime=5000&type=5#list,https://hidemy.name/cn/proxy-list/?maxtime=5000&type=s#list"
-    ip: '<td>(\d+?\.\d+?.\d+?\.\d+?)</td><td>\d+</td>'
-    port: '<td>\d+?\.\d+?.\d+?\.\d+?</td><td>(\d+)</td>'
+    urls:
+      - https://www.proxy-list.download/HTTP
+    ip: '<td>[\s]*?(\d+?\.\d+?.\d+?\.\d+?[\s]*?)</td>'
+    port: '<td>[\s]*?\d+?\.\d+?.\d+?\.\d+?[\s]*?</td>[\s]*?<td>[\s]*?(\d+?)[\s]*?</td>'
     proxy: true
 
-  - name: "scrape代理"
+  #  - name: "hide.mn"#cloudflare暂时饶不了
+  #    method: 'GET'
+  #    Headers:
+  #      User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+  #    urls:
+  #      - https://hidemy.io/en/proxy-list/?maxtime=1000&type=hs5#list
+  #      - https://hidemy.name/en/proxy-list/?maxtime=1000&type=hs5#list
+  #      - https://hide.mn/en/proxy-list/?maxtime=1000&type=hs5#list
+  #    ip: '<td>(\d+?\.\d+?.\d+?\.\d+?)</td><td>\d+</td>'
+  #    port: '<td>\d+?\.\d+?.\d+?\.\d+?</td><td>(\d+)</td>'
+  #    proxy: true
+
+  - name: "proxyscrape.com"
     method: 'GET'
     Headers:
       User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    urls: "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&country=CN&ssl=all&anonymity=all"
+    urls:
+      - https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&country=CN&ssl=all&anonymity=all
+      - https://api.proxyscrape.com/v4/free-proxy-list/get?request=get_proxies&protocol=http,socks4,socks5&proxy_format=ipport&format=text&timeout=20000
     ip: '(\d+?\.\d+?.\d+?\.\d+?):\d+'
     port: '\d+?\.\d+?.\d+?\.\d+?:(\d+)'
     anonymity: '透明'
     proxy: true
+  - name: "openproxy.space"
+    method: 'GET'
+    Headers:
+      User-Agent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+    urls:
+      - https://openproxy.space/list/socks5
+      - https://openproxy.space/list/http
+      - https://openproxy.space/list/socks4
+      -
+    ip: '"(\d+?\.\d+?.\d+?\.\d+?):\d+?",'
+    port: '"\d+?\.\d+?.\d+?\.\d+?:(\d+?)",'
+    anonymity: '透明'
+    proxy: true
 
-  - name: "my代理"
+  - name: "my-proxy.com"
     method: 'GET'
     Headers:
       User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
-    urls: "https://www.my-proxy.com/free-socks-5-proxy.html,https://www.my-proxy.com/free-elite-proxy.html,https://www.my-proxy.com/free-anonymous-proxy.html"
+    urls:
+      - https://www.my-proxy.com/free-elite-proxy.html
+      - https://www.my-proxy.com/free-anonymous-proxy.html
+      - https://www.my-proxy.com/free-transparent-proxy.html
+    ip: '(\d+?\.\d+?.\d+?\.\d+?):\d+'
+    port: '\d+?\.\d+?.\d+?\.\d+?:(\d+)'
+    proxy: true
+
+  - name: "my-proxy.com"
+    method: 'GET'
+    Headers:
+      User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+    urls:
+      - https://www.my-proxy.com/free-socks-4-proxy.html
+      - https://www.my-proxy.com/free-socks-5-proxy.html
+      - https://www.my-proxy.com/free-proxy-list.html
+      - https://www.my-proxy.com/free-proxy-list-2.html
+      - https://www.my-proxy.com/free-proxy-list-3.html
+      - https://www.my-proxy.com/free-proxy-list-4.html
+      - https://www.my-proxy.com/free-proxy-list-5.html
+      - https://www.my-proxy.com/free-proxy-list-6.html
+      - https://www.my-proxy.com/free-proxy-list-7.html
+      - https://www.my-proxy.com/free-proxy-list-8.html
+      - https://www.my-proxy.com/free-proxy-list-9.html
+      - https://www.my-proxy.com/free-proxy-list-10.html
     ip: '>(\d+?\.\d+?.\d+?\.\d+?):\d+#'
     port: '>\d+?\.\d+?.\d+?\.\d+?:(\d+)#'
     proxy: true
@@ -152,11 +223,53 @@ spider:
     method: 'GET'
     Headers:
       User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
-    urls: "https://free-proxy-list.net/,https://www.us-proxy.org/,https://www.socks-proxy.net/"
+    urls:
+      - https://free-proxy-list.net/
+      - https://www.us-proxy.org/
+      - https://www.socks-proxy.net/
+      - https://rootjazz.com/proxies/proxies.txt
     ip: '(\d+?\.\d+?.\d+?\.\d+?):\d+'
     port: '\d+?\.\d+?.\d+?\.\d+?:(\d+)'
     proxy: true
 
+
+  - name: "github"
+    method: 'GET'
+    Headers:
+      User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+    urls:
+      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/http.txt
+      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/https.txt
+      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/socks4.txt
+      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/socks5.txt
+      - https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/all/data.txt
+      - https://raw.githubusercontent.com/saisuiu/Lionkings-Http-Proxys-Proxies/refs/heads/main/free.txt
+      - https://raw.githubusercontent.com/saisuiu/Lionkings-Http-Proxys-Proxies/refs/heads/main/cnfree.txt
+      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/http.txt
+      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/https.txt
+      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/socks4.txt
+      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/socks5.txt
+      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/connect.txt
+      - https://raw.githubusercontent.com/Vauth/proxy/main/proxy.txt
+      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/http.txt
+      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/https.txt
+      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/socks4.txt
+      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/socks5.txt
+      - https://github.com/BreakingTechFr/Proxy_Free/blob/main/proxies/all.txt
+      - https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt
+    ip: '(\d+?\.\d+?.\d+?\.\d+?):\d+'
+    port: '\d+?\.\d+?.\d+?\.\d+?:(\d+)'
+    proxy: true
+
+  - name: "github.com/jepluk/PROXYLIST"
+    method: 'GET'
+    Headers:
+      User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+    urls:
+      - https://raw.githubusercontent.com/jepluk/PROXYLIST/main/all.json
+    ip: 'address": "(\d+?\.\d+?.\d+?\.\d+?)", "'
+    port: 'port": "(\d+)", "'
+    proxy: true
 
 #通过插件，扩展ip源
 #spiderPlugin:
@@ -173,4 +286,3 @@ spider:
 #    path: 'ip.txt'
 #
 #
-

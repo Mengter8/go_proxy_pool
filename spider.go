@@ -17,7 +17,6 @@ import (
 
 var wg sync.WaitGroup
 var wg2 sync.WaitGroup
-var mux sync.Mutex
 var ch2 = make(chan int, 50)
 
 // 是否抓取中
@@ -37,7 +36,7 @@ func spiderRun() {
 		go spider(&conf.Spider[i])
 	}
 	wg2.Wait()
-	log.Printf("\r%s 代理抓取结束           \n", time.Now().Format("2006-01-02 15:04:05"))
+	log.Println("代理抓取结束")
 
 	count = 0
 	log.Println("开始扩展抓取代理...")
@@ -46,7 +45,7 @@ func spiderRun() {
 		go spiderPlugin(&conf.SpiderPlugin[i])
 	}
 	wg2.Wait()
-	log.Printf("\r%s 扩展代理抓取结束         \n", time.Now().Format("2006-01-02 15:04:05"))
+	log.Printf("扩展代理抓取结束")
 	count = 0
 	log.Println("开始文件抓取代理...")
 	for i := range conf.SpiderFile {
@@ -54,22 +53,18 @@ func spiderRun() {
 		go spiderFile(&conf.SpiderFile[i])
 	}
 	wg2.Wait()
-	log.Printf("\r%s 文件代理抓取结束         \n", time.Now().Format("2006-01-02 15:04:05"))
-
-	//导出代理到文件
-	export()
-
+	log.Printf("文件代理抓取结束")
 }
 
 func spider(sp *Spider) {
 	defer func() {
 		wg2.Done()
-		//log.Printf("%s 结束...",sp.Name)
+		//log.Printf("%s 采集结束...", sp.Name)
 	}()
-	//log.Printf("%s 开始...", sp.Name)
-	urls := strings.Split(sp.Urls, ",")
+	//log.Printf("%s 采集开始...", sp.Name)
+
 	var pis []ProxyIp
-	for ui, v := range urls {
+	for ui, v := range sp.Urls {
 		if ui != 0 {
 			time.Sleep(time.Duration(sp.Interval) * time.Second)
 		}
@@ -96,6 +91,7 @@ func spider(sp *Spider) {
 		ip := regexp.MustCompile(sp.Ip).FindAllStringSubmatch(result, -1)
 		port := regexp.MustCompile(sp.Port).FindAllStringSubmatch(result, -1)
 		if len(ip) == 0 {
+			log.Printf("%s正则匹配失败%s", sp.Name, v)
 			continue
 		}
 		for i := range ip {
@@ -103,16 +99,9 @@ func spider(sp *Spider) {
 			var _port string
 			_ip, _ = url.QueryUnescape(ip[i][1])
 			_port, _ = url.QueryUnescape(port[i][1])
-			_is := true
-			for pi := range ProxyPool {
-				if ProxyPool[pi].Ip == _ip && ProxyPool[pi].Port == _port {
-					_is = false
-					break
-				}
-			}
-			if _is {
-				pis = append(pis, ProxyIp{Ip: _ip, Port: _port, Source: sp.Name})
-			}
+
+			//log.Printf("`%s`获取到%s:%s", sp.Name, _ip, _port)
+			pis = append(pis, ProxyIp{IPAddress: _ip, Port: _port, Source: sp.Name})
 		}
 	}
 	pis = uniquePI(pis)
@@ -145,13 +134,13 @@ func spiderPlugin(spp *SpiderPlugin) {
 		for i := range line {
 			split := strings.Split(line[i], ":")
 			for pi := range ProxyPool {
-				if ProxyPool[pi].Ip == split[0] && ProxyPool[pi].Port == split[1] {
+				if ProxyPool[pi].IPAddress == split[0] && ProxyPool[pi].Port == split[1] {
 					_is = false
 					break
 				}
 			}
 			if _is {
-				pis = append(pis, ProxyIp{Ip: split[0], Port: split[1], Source: spp.Name})
+				pis = append(pis, ProxyIp{IPAddress: split[0], Port: split[1], Source: spp.Name})
 			}
 		}
 		//var _pis []ProxyIp
@@ -200,13 +189,13 @@ func spiderFile(spp *SpiderFile) {
 		if len(line) > 0 {
 			split := strings.Split(strings.TrimSpace(string(line)), ":")
 			for pi := range ProxyPool {
-				if ProxyPool[pi].Ip == split[0] && ProxyPool[pi].Port == split[1] {
+				if ProxyPool[pi].IPAddress == split[0] && ProxyPool[pi].Port == split[1] {
 					_is = false
 					break
 				}
 			}
 			if _is {
-				pis = append(pis, ProxyIp{Ip: split[0], Port: split[1], Source: spp.Name})
+				pis = append(pis, ProxyIp{IPAddress: split[0], Port: split[1], Source: spp.Name})
 			}
 		}
 		if err != nil {
@@ -221,5 +210,4 @@ func spiderFile(spp *SpiderFile) {
 		go Verify(&pis[i], &wg, ch2, true)
 	}
 	wg.Wait()
-
 }

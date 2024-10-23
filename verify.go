@@ -18,21 +18,18 @@ var verifyIS = false
 var ProxyPool []ProxyIp
 var lock sync.Mutex
 var mux2 sync.Mutex
-
 var count int
 
 func countAdd(i int) {
 	mux2.Lock()
 	count += i
 	mux2.Unlock()
-
 }
 func countDel() {
 	mux2.Lock()
 	fmt.Printf("\r代理验证中: %d     ", count)
 	count--
 	mux2.Unlock()
-
 }
 func Verify(pi *ProxyIp, wg *sync.WaitGroup, ch chan int, first bool) {
 	defer func() {
@@ -40,86 +37,35 @@ func Verify(pi *ProxyIp, wg *sync.WaitGroup, ch chan int, first bool) {
 		countDel()
 		<-ch
 	}()
-	pr := pi.Ip + ":" + pi.Port
-	//是抓取验证，还是验证代理池内IP
-	startT := time.Now()
-	if first {
-		if VerifyHttps(pr) {
-			pi.Type = "HTTPS"
-		} else if VerifyHttp(pr) {
-			pi.Type = "HTTP"
+	// 拼接IP和端口
+	proxyAddress := pi.IPAddress + ":" + pi.Port
+	startTime := time.Now()
 
-		} else if VerifySocket5(pr) {
-			pi.Type = "SOCKET5"
-		} else {
-			return
-		}
-		tc := time.Since(startT)
-		pi.Time = time.Now().Format("2006-01-02 15:04:05")
-		pi.Speed = fmt.Sprintf("%s", tc)
-		anonymity := Anonymity(pi, 0)
-		if anonymity == "" {
-			return
-		}
-		pi.Anonymity = anonymity
-	} else {
-		pi.RequestNum++
-		if pi.Type == "HTTPS" {
-			if VerifyHttps(pr) {
-				pi.SuccessNum++
-			}
-		} else if pi.Type == "HTTP" {
-			if VerifyHttp(pr) {
-				pi.SuccessNum++
-			}
-		} else if pi.Type == "SOCKET5" {
-			if VerifySocket5(pr) {
-				pi.SuccessNum++
-			}
-		}
-		tc := time.Since(startT)
-		pi.Time = time.Now().Format("2006-01-02 15:04:05")
-		pi.Speed = fmt.Sprintf("%s", tc)
-		return
+	// 通用协议验证逻辑
+	switch {
+	case VerifyHttps(proxyAddress) && pi.Protocol == "HTTPS" || first:
+		pi.Protocol = "HTTPS"
+		pi.IsWorking = true
+	case VerifyHttp(proxyAddress) && pi.Protocol == "HTTP" || first:
+		pi.Protocol = "HTTP"
+		pi.IsWorking = true
+	case VerifySocket5(proxyAddress) && pi.Protocol == "SOCKET5" || first:
+		pi.Protocol = "SOCKET5"
+		pi.IsWorking = true
+	case pi.Protocol == "":
+		pi.IsWorking = false
 	}
-	tr := http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	pi.ResponseTime = fmt.Sprintf("%s", time.Since(startTime))
+	pi.LastChecked = time.Now()
+	if pi.IsWorking && first {
+		// 首次验证时，获取匿名级别、ISP等信息并保存
+		pi.Anonymity = Anonymity(pi, 0)
+		pi.Isp, pi.Country, pi.Province, pi.City = getIpAddressInfo(pi.IPAddress)
+		CreateProxyRecord(pi)
+	} else if pi.Protocol != "" {
+		// 仅更新验证时间和评分
+		updateProxyStatus(pi, pi.IsWorking)
 	}
-	client := http.Client{Timeout: 15 * time.Second, Transport: &tr}
-	//处理返回结果
-	res, err := client.Get("https://searchplugin.csdn.net/api/v1/ip/get?ip=" + pi.Ip)
-	if err != nil {
-		res, err = client.Get("https://searchplugin.csdn.net/api/v1/ip/get?ip=" + pi.Ip)
-		if err != nil {
-			return
-		}
-	}
-	defer res.Body.Close()
-	dataBytes, _ := io.ReadAll(res.Body)
-	result := string(dataBytes)
-	address := regexp.MustCompile("\"address\":\"(.+?)\",").FindAllStringSubmatch(result, -1)
-	if len(address) != 0 {
-		addresss := removeDuplication_map(strings.Split(address[0][1], " "))
-		le := len(addresss)
-		pi.Isp = strings.Split(addresss[le-1], "/")[0]
-		for i := range addresss {
-			if i == le-1 {
-				break
-			}
-			switch i {
-			case 0:
-				pi.Country = addresss[0]
-			case 1:
-				pi.Province = addresss[1]
-			case 2:
-				pi.City = addresss[2]
-			}
-		}
-	}
-
-	pi.RequestNum = 1
-	pi.SuccessNum = 1
-	PIAdd(pi)
 }
 func VerifyHttp(pr string) bool {
 	proxyUrl, proxyErr := url.Parse("http://" + pr)
@@ -186,10 +132,10 @@ func Anonymity(pr *ProxyIp, c int) string {
 	c++
 	host := "http://httpbin.org/get"
 	proxy := ""
-	if pr.Type == "SOCKET5" {
-		proxy = "socks5://" + pr.Ip + ":" + pr.Port
+	if pr.Protocol == "SOCKET5" {
+		proxy = "socks5://" + pr.IPAddress + ":" + pr.Port
 	} else {
-		proxy = "http://" + pr.Ip + ":" + pr.Port
+		proxy = "http://" + pr.IPAddress + ":" + pr.Port
 	}
 	proxyUrl, proxyErr := url.Parse(proxy)
 	if proxyErr != nil {
@@ -232,17 +178,44 @@ func Anonymity(pr *ProxyIp, c int) string {
 	}
 	return "高匿"
 }
+func getIpAddressInfo(IpAddres string) (string, string, string, string) {
+	var Isp, Country, Province, City = "", "", "", ""
 
-func PIAdd(pi *ProxyIp) {
-	lock.Lock()
-	defer lock.Unlock()
-	for i := range ProxyPool {
-		if ProxyPool[i].Ip == pi.Ip && ProxyPool[i].Port == pi.Port {
-			return
+	tr := http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := http.Client{Timeout: 15 * time.Second, Transport: &tr}
+	//处理返回结果
+	res, err := client.Get("https://searchplugin.csdn.net/api/v1/ip/get?ip=" + IpAddres)
+	if err != nil {
+		res, err = client.Get("https://searchplugin.csdn.net/api/v1/ip/get?ip=" + IpAddres)
+		if err != nil {
+			return Isp, Country, Province, City
 		}
 	}
-	ProxyPool = append(ProxyPool, *pi)
-	ProxyPool = uniquePI(ProxyPool)
+	defer res.Body.Close()
+	dataBytes, _ := io.ReadAll(res.Body)
+	result := string(dataBytes)
+	address := regexp.MustCompile("\"address\":\"(.+?)\",").FindAllStringSubmatch(result, -1)
+	if len(address) != 0 {
+		addresss := removeDuplication_map(strings.Split(address[0][1], " "))
+		le := len(addresss)
+		Isp = strings.Split(addresss[le-1], "/")[0]
+		for i := range addresss {
+			if i == le-1 {
+				break
+			}
+			switch i {
+			case 0:
+				Country = addresss[0]
+			case 1:
+				Province = addresss[1]
+			case 2:
+				City = addresss[2]
+			}
+		}
+	}
+	return Isp, Country, Province, City
 }
 
 func VerifyProxy() {
@@ -252,33 +225,18 @@ func VerifyProxy() {
 	}
 	verifyIS = true
 
-	log.Printf("开始验证代理存活情况, 验证次数是当前代理数的5倍: %d\n", len(ProxyPool)*5)
-	for i, _ := range ProxyPool {
-		ProxyPool[i].RequestNum = 0
-		ProxyPool[i].SuccessNum = 0
-	}
-	count = len(ProxyPool) * 5
-
-	for io := 0; io < 5; io++ {
-		for i := range ProxyPool {
-			wg3.Add(1)
-			ch1 <- 1
-			go Verify(&ProxyPool[i], &wg3, ch1, false)
-		}
-		time.Sleep(15 * time.Second)
-	}
-	wg3.Wait()
-	lock.Lock()
-	var pp []ProxyIp
+	log.Printf("开始验证代理存活情况")
+	count = len(ProxyPool)
 	for i := range ProxyPool {
-		if ProxyPool[i].SuccessNum != 0 {
-			pp = append(pp, ProxyPool[i])
-		}
+		wg3.Add(1)
+		ch1 <- 1
+		go Verify(&ProxyPool[i], &wg3, ch1, false)
 	}
-	ProxyPool = pp
-	export()
-	lock.Unlock()
-	log.Printf("\r%s 代理验证结束, 当前可用IP数: %d\n", time.Now().Format("2006-01-02 15:04:05"), len(ProxyPool))
+	time.Sleep(15 * time.Second)
+
+	wg3.Wait()
+	log.Printf("代理验证结束, 当前可用IP数: %d\n", len(ProxyPool))
+	cleanInvalidProxies()
 	verifyIS = false
 }
 

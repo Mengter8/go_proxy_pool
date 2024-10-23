@@ -163,22 +163,22 @@ func gethttpIp() string {
 		return ""
 	}
 	for _, v := range ProxyPool {
-		if v.Type == "HTTP" {
+		if v.Protocol == "HTTP" {
 			is := true
 			for _, vv := range httpI {
-				if v.Ip == vv.Ip && v.Port == vv.Port {
+				if v.IPAddress == vv.IPAddress && v.Port == vv.Port {
 					is = false
 				}
 			}
 			if is {
 				httpI = append(httpI, v)
-				return v.Ip + ":" + v.Port
+				return v.IPAddress + ":" + v.Port
 			}
 		}
 	}
 	var addr string
 	if len(httpI) != 0 {
-		addr = httpI[0].Ip + ":" + httpI[0].Port
+		addr = httpI[0].IPAddress + ":" + httpI[0].Port
 	}
 	httpI = make([]ProxyIp, 0)
 	if addr == "" {
@@ -194,22 +194,22 @@ func getHttpsIp() string {
 		return ""
 	}
 	for _, v := range ProxyPool {
-		if v.Type == "HTTPS" {
+		if v.Protocol == "HTTPS" {
 			is := true
 			for _, vv := range httpS {
-				if v.Ip == vv.Ip && v.Port == vv.Port {
+				if v.IPAddress == vv.IPAddress && v.Port == vv.Port {
 					is = false
 				}
 			}
 			if is {
 				httpS = append(httpS, v)
-				return v.Ip + ":" + v.Port
+				return v.IPAddress + ":" + v.Port
 			}
 		}
 	}
 	var addr string
 	if len(httpS) != 0 {
-		addr = httpS[0].Ip + ":" + httpS[0].Port
+		addr = httpS[0].IPAddress + ":" + httpS[0].Port
 	}
 	httpS = make([]ProxyIp, 0)
 	return addr
@@ -221,22 +221,22 @@ func getSocket5Ip() string {
 		return ""
 	}
 	for _, v := range ProxyPool {
-		if v.Type == "SOCKET5" {
+		if v.Protocol == "SOCKET5" {
 			is := true
 			for _, vv := range socket5 {
-				if v.Ip == vv.Ip && v.Port == vv.Port {
+				if v.IPAddress == vv.IPAddress && v.Port == vv.Port {
 					is = false
 				}
 			}
 			if is {
 				socket5 = append(socket5, v)
-				return v.Ip + ":" + v.Port
+				return v.IPAddress + ":" + v.Port
 			}
 		}
 	}
 	var addr string
 	if len(socket5) != 0 {
-		addr = socket5[0].Ip + ":" + socket5[0].Port
+		addr = socket5[0].IPAddress + ":" + socket5[0].Port
 	}
 	socket5 = make([]ProxyIp, 0)
 	return addr

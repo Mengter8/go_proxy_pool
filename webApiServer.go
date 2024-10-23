@@ -47,7 +47,7 @@ func Run() {
 func index(c *gin.Context) {
 	home := Home{Sum: len(ProxyPool), Type: make(map[string]int), Anonymity: make(map[string]int), Country: make(map[string]int), Source: make(map[string]int), TunnelProxy: make(map[string]string)}
 	for i := range ProxyPool {
-		home.Type[ProxyPool[i].Type] += 1
+		home.Type[ProxyPool[i].Protocol] += 1
 		home.Anonymity[ProxyPool[i].Anonymity] += 1
 		home.Country[ProxyPool[i].Country] += 1
 		home.Source[ProxyPool[i].Source] += 1
@@ -72,7 +72,7 @@ func get(c *gin.Context) {
 	so := c.DefaultQuery("source", "all")
 	co := c.DefaultQuery("count", "1")
 	for _, v := range ProxyPool {
-		if (v.Type == ty || ty == "all") && (v.Anonymity == an || an == "all") && (v.Country == re || re == "all") && (v.Source == so || so == "all") {
+		if (v.Protocol == ty || ty == "all") && (v.Anonymity == an || an == "all") && (v.Country == re || re == "all") && (v.Source == so || so == "all") {
 			prs = append(prs, v)
 		}
 	}
@@ -83,7 +83,7 @@ func get(c *gin.Context) {
 		for _, v := range prs {
 			_is = true
 			for _, vv := range record {
-				if v.Ip+v.Port == vv.Ip+vv.Port {
+				if v.IPAddress+v.Port == vv.IPAddress+vv.Port {
 					_is = false
 				}
 			}
@@ -154,7 +154,7 @@ func delIp(addr string) int {
 	defer lock.Unlock()
 	var in int
 	for i, v := range ProxyPool {
-		if v.Ip+":"+v.Port == addr {
+		if v.IPAddress+":"+v.Port == addr {
 			in++
 			if i+1 < len(ProxyPool) {
 				ProxyPool = append(ProxyPool[:i], ProxyPool[i+1:]...)
