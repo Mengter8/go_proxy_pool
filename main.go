@@ -27,7 +27,7 @@ func main() {
 	initSqlite()
 	InitData()
 	//开启隧道代理
-	go httpSRunTunnelProxyServer()
+	go httpsRunTunnelProxyServer()
 	go socket5RunTunnelProxyServer()
 	//启动webAPi
 	Run()
@@ -56,19 +56,6 @@ func InitData() {
 					//抓取代理
 					spiderRun()
 				}
-			}
-		}
-	}()
-
-	//定时更换隧道IP
-	go func() {
-		tunnelTime := time.Duration(conf.Config.TunnelTime)
-		ticker := time.NewTicker(tunnelTime * time.Second)
-		for range ticker.C {
-			if len(ProxyPool) != 0 {
-				httpsIp = getHttpsIp()
-				httpIp = gethttpIp()
-				socket5Ip = getSocket5Ip()
 			}
 		}
 	}()
