@@ -29,7 +29,6 @@ func httpRunTunnelProxyServer() {
 			if r.Method == http.MethodConnect {
 				httpsIp = getConnectIp()
 				log.Printf("隧道代理 | HTTPS 请求：%s 使用代理: %s", r.URL.String(), httpsIp)
-				httpsIp = "111.1.61.47:3128"
 				destConn, err := net.DialTimeout("tcp", httpsIp, 20*time.Second)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -120,13 +119,22 @@ func httpsRunTunnelProxyServer() {
 			log.Panic(err)
 		}
 		go func() {
-			socket5Ip = getConnectIp()
-			log.Printf("隧道代理 | Connect 请求 使用代理: %s", socket5Ip)
+			socket5Ip = getHttpsIp()
+			log.Printf("隧道代理 | Https 请求 使用代理: %s", socket5Ip)
 			if clientConn == nil {
 				return
 			}
 			defer clientConn.Close()
 			destConn, err := net.DialTimeout("tcp", socket5Ip, 30*time.Second)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			defer destConn.Close()
+
+			// 配置TLSClientConfig忽略证书认证
+			tlsConfig := &tls.Config{InsecureSkipVerify: true}
+			destConn, err = tls.DialWithDialer(&net.Dialer{Timeout: 30 * time.Second}, "tcp", socket5Ip, tlsConfig)
 			if err != nil {
 				log.Println(err)
 				return
