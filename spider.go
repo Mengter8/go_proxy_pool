@@ -29,7 +29,6 @@ func spiderRun() {
 		run = false
 	}()
 
-	count = 0
 	log.Println("开始抓取代理...")
 	for i := range conf.Spider {
 		wg2.Add(1)
@@ -38,7 +37,6 @@ func spiderRun() {
 	wg2.Wait()
 	log.Println("代理抓取结束")
 
-	count = 0
 	log.Println("开始扩展抓取代理...")
 	for i := range conf.SpiderPlugin {
 		wg2.Add(1)
@@ -46,7 +44,7 @@ func spiderRun() {
 	}
 	wg2.Wait()
 	log.Printf("扩展代理抓取结束")
-	count = 0
+
 	log.Println("开始文件抓取代理...")
 	for i := range conf.SpiderFile {
 		wg2.Add(1)
@@ -105,7 +103,6 @@ func spider(sp *Spider) {
 		}
 	}
 	pis = uniquePI(pis)
-	countAdd(len(pis))
 	for i := range pis {
 		wg.Add(1)
 		ch2 <- 1
@@ -143,27 +140,8 @@ func spiderPlugin(spp *SpiderPlugin) {
 				pis = append(pis, ProxyIp{IPAddress: split[0], Port: split[1], Source: spp.Name})
 			}
 		}
-		//var _pis []ProxyIp
-		//var pis []ProxyIp
-		//var _is = true
-		//err = json.Unmarshal(buf, &_pis)
-		//if err != nil {
-		//	log.Printf("%s 返回值不符合规范\n", spp.Name)
-		//	return
-		//}
-		//for i := range _pis {
-		//	for pi := range ProxyPool {
-		//		if ProxyPool[pi].Ip == _pis[i].Ip && ProxyPool[pi].Port == _pis[i].Port {
-		//			_is = false
-		//			break
-		//		}
-		//	}
-		//	if _is {
-		//		pis = append(pis, ProxyIp{Ip: _pis[i].Ip, Port: _pis[i].Port, Source: spp.Name})
-		//	}
 	}
 	pis = uniquePI(pis)
-	countAdd(len(pis))
 	for i := range pis {
 		wg.Add(1)
 		ch2 <- 1
@@ -203,7 +181,6 @@ func spiderFile(spp *SpiderFile) {
 		}
 	}
 	pis = uniquePI(pis)
-	countAdd(len(pis))
 	for i := range pis {
 		wg.Add(1)
 		ch2 <- 1

@@ -25,13 +25,6 @@ func main() {
 		"\n<___'                        <___'                  ")
 	initSqlite()
 	InitData()
-	//var a, b, c, d bool
-	//a = VerifyProxy2("127.0.0.1:20171", "HTTP")
-	//b = VerifyProxy2("127.0.0.1:20171", "HTTPS")
-	//b = VerifyProxy2("127.0.0.1:20171", "HTTPS")
-	//c = VerifyProxy2("127.0.0.1:20171", "CONNECT")
-	//d = VerifyProxy2("127.0.0.1:20170", "SOCKET5")
-	//log.Printf("http: %v, https: %v, connect: %v, socket5: %v", a, b, c, d)
 	//开启隧道代理
 	go httpRunTunnelProxyServer()
 	go httpsRunTunnelProxyServer()
@@ -58,7 +51,7 @@ func InitData() {
 		ticker := time.NewTicker(60 * time.Second)
 		for range ticker.C {
 			if len(ProxyPool) < conf.Config.ProxyNum {
-				if !run && !verifyIS {
+				if !run {
 					log.Printf("代理数量不足 %d\n", conf.Config.ProxyNum)
 					//抓取代理
 					spiderRun()
@@ -72,7 +65,7 @@ func InitData() {
 		verifyTime := time.Duration(conf.Config.VerifyTime)
 		ticker := time.NewTicker(verifyTime * time.Second)
 		for range ticker.C {
-			if !verifyIS && !run {
+			if !verifyIS {
 				VerifyProxy()
 			}
 		}

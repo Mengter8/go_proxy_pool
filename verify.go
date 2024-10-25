@@ -17,25 +17,11 @@ import (
 var verifyIS = false
 var ProxyPool []ProxyIp
 var lock sync.Mutex
-var mux2 sync.Mutex
-var count int
 var PublicIp = "0.0.0.0"
 
-func countAdd(i int) {
-	mux2.Lock()
-	count += i
-	mux2.Unlock()
-}
-func countDel() {
-	mux2.Lock()
-	log.Printf("代理验证中: %d     ", count)
-	count--
-	mux2.Unlock()
-}
 func Verify(pi *ProxyIp, wg *sync.WaitGroup, ch chan int, first bool) {
 	defer func() {
 		wg.Done()
-		countDel()
 		<-ch
 	}()
 	// 拼接IP和端口
@@ -55,22 +41,21 @@ func Verify(pi *ProxyIp, wg *sync.WaitGroup, ch chan int, first bool) {
 	case (pi.Protocol == "SOCKET5" || first) && VerifyProxy2(proxyAddress, "SOCKET5"):
 		pi.Protocol = "SOCKET5"
 		pi.IsWorking = true
-	case pi.Protocol == "" && !first:
+	default:
 		pi.IsWorking = false
 	}
 	pi.ResponseTime = time.Since(startTime).Milliseconds()
-	if pi.IsWorking {
+	if pi.IsWorking && first {
 		// 获取匿名级别、ISP等信息并保存
 		pi.Anonymity = Anonymity(pi)
 		if pi.Anonymity == "" {
 			pi.IsWorking = false
 		}
 		pi.Isp, pi.Country, pi.Province, pi.City = getIpAddressInfo(pi.IPAddress)
-		CreateProxyRecord(pi)
-		updateProxyStatus(pi, pi.IsWorking)
+		updateProxyRecord(pi)
 	} else if pi.Protocol != "" {
 		// 仅更新验证时间和评分及状态
-		updateProxyStatus(pi, pi.IsWorking)
+		updateProxyRecord(pi)
 	}
 }
 
@@ -151,7 +136,7 @@ func VerifyProxy2(proxyAddress string, protocol string) bool {
 
 	res, err := client.Do(request)
 	if err != nil {
-		log.Printf("代理请求失败: %v", err)
+		//log.Printf("代理请求失败: %v", err)
 		return false
 	}
 	defer res.Body.Close()
@@ -191,7 +176,7 @@ func Anonymity(pr *ProxyIp) string {
 	//处理返回结果
 	res, err := client.Do(request)
 	if err != nil {
-		log.Printf("代理请求失败: %s %v", proxy, err)
+		//log.Printf("代理请求失败: %s %v", proxy, err)
 		pr.IsWorking = false
 		return ""
 	}
@@ -204,7 +189,7 @@ func Anonymity(pr *ProxyIp) string {
 	// 判断代理匿名性
 	arr := regexp.MustCompile(`"origin": "(.*)",`).FindStringSubmatch(result)
 	if len(arr) == 0 {
-		log.Printf("响应不符合预期: %s %s", proxy, result)
+		//log.Printf("响应不符合预期: %s %s", proxy, result)
 		pr.IsWorking = false
 		return ""
 	}
@@ -289,7 +274,6 @@ func VerifyProxy() {
 	verifyIS = true
 	log.Printf("开始验证代理存活情况")
 	getPublicIp()
-	count = len(ProxyPool)
 	for i := range ProxyPool {
 		wg3.Add(1)
 		ch1 <- 1

@@ -5,17 +5,20 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"log"
+	"sync"
 	"time"
 )
 
 var db *gorm.DB
+var mu sync.Mutex
 
 type ProxyIp struct {
-	IPAddress    string    `gorm:"not null"` // 代理IP地址
-	Port         string    `gorm:"not null"` // 代理端口
-	Protocol     string    `gorm:"not null"` // 代理协议
-	countryCode  string    `gorm:"not null"` // 国家代码
+	IPAddress    string    `gorm:"not null;uniqueIndex:unique_proxy"` // 代理IP地址
+	Port         string    `gorm:"not null;uniqueIndex:unique_proxy"` // 代理端口
+	Protocol     string    `gorm:"not null;uniqueIndex:unique_proxy"` // 代理协议
+	countryCode  string    `gorm:"not null"`                          // 国家代码
 	Country      string    // 代理所在国家
 	ResponseTime int64     // 响应时间
 	Score        int       `gorm:"default:10"` // 评分
@@ -55,43 +58,34 @@ func loadProxyPool() {
 	}
 }
 
-// 创建代理URL记录
-func CreateProxyRecord(data *ProxyIp) {
-	if !proxyExists(data.IPAddress, data.Port, data.Protocol) {
-		err := db.Create(data).Error
-		if err != nil {
-			log.Println("插入数据失败：", err)
-			return
-		}
-		log.Println("插入数据成功")
-	}
-}
-
 // 更新代理的评分、最后验证时间及工作状态
-func updateProxyStatus(pi *ProxyIp, IsWorking bool) {
+func updateProxyRecord(pi *ProxyIp) {
+	mu.Lock()
+	defer mu.Unlock()
 	updates := map[string]interface{}{
 		"LastChecked":  time.Now(),
 		"ResponseTime": pi.ResponseTime,
 		"IsWorking":    pi.IsWorking,
 	}
 
-	// 根据验证结果更新评分和失败计数
-	if IsWorking {
+	// 根据验证结果调整评分
+	if pi.IsWorking {
 		updates["Score"] = gorm.Expr("Score + 1")
 	} else {
 		updates["Score"] = gorm.Expr("Score - 2")
 	}
 
-	// 更新数据库中的记录
-	db.Model(&ProxyIp{}).
-		Where("ip_address = ? AND port = ? AND protocol = ?", pi.IPAddress, pi.Port, pi.Protocol).
-		Updates(updates)
-}
+	err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "ip_address"}, {Name: "port"}, {Name: "protocol"}},
+		DoUpdates: clause.AssignmentColumns([]string{"last_checked", "response_time", "is_working", "score"}),
+	}).Create(pi).Error
 
-// 检查代理是否已存在
-func proxyExists(IPAddress string, Port string, Protocol string) bool {
-	result := db.First(&ProxyIp{}, "ip_address = ? AND port = ? AND protocol = ?", IPAddress, Port, Protocol)
-	return result.RowsAffected > 0
+	if err != nil {
+		log.Println("数据插入或更新失败：", err)
+		return
+	}
+
+	log.Println("数据插入或更新成功")
 }
 
 // 清理失效代理
@@ -107,8 +101,8 @@ func cleanInvalidProxies() {
 
 // 获取指定协议的代理IP
 func getProxyIp(protocol string) string {
-	lock2.Lock()
-	defer lock2.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 
 	// 创建一个 ProxyIp 变量来存储查询结果
 	var proxy ProxyIp
