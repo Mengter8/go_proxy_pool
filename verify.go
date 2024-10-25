@@ -158,9 +158,6 @@ func VerifyProxy2(proxyAddress string, protocol string) bool {
 
 	dataBytes, _ := io.ReadAll(res.Body)
 	result := string(dataBytes)
-	if protocol == "HTTPS" {
-		log.Printf(result)
-	}
 	return strings.Contains(result, conf.Config.VerifyUrlWords)
 }
 func Anonymity(pr *ProxyIp) string {
