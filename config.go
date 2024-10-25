@@ -24,6 +24,8 @@ type config struct {
 	TunnelTime       int    `yaml:"tunnelTime" json:"tunnelTime"`
 	ProxyNum         int    `yaml:"proxyNum" json:"proxyNum"`
 	VerifyTime       int    `yaml:"verifyTime" json:"verifyTime"`
+	VerifyUrl        string `yaml:"verifyUrl" json:"verifyUrl"`
+	VerifyUrlWords   string `yaml:"verifyUrlWords" json:"verifyUrlWords"`
 	ThreadNum        int    `yaml:"threadNum" json:"threadNum"`
 }
 type Spider struct {
