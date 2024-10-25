@@ -10,22 +10,23 @@ config:
   #webApi监听端口
   port: 8080
   #http隧道代理端口
-  httpTunnelPort: 8111
+  httpTunnelPort: 3128
+  #https隧道代理端口
+  httpsTunnelPort: 443
   #socket隧道代理端口
-  socketTunnelPort: 8112
-  #隧道代理更换时间秒
-  tunnelTime: 60
+  socketTunnelPort: 1080
+  #隧道筛选超时时间 (ms)
+  tunnelTime: 3000
   #可用IP数量小于‘proxyNum’时就去抓取
-  proxyNum: 300
+  proxyNum: 30
   #代理IP验证间隔秒
-  verifyTime: 120
+  verifyTime: 600
+  #检查的URL
+  verifyUrl: 'httpbin.org/get'
+  #检查URL存在的字段
+  verifyUrlWords: 'httpbin.org/get'
   #抓取/检测状态线程数
   threadNum: 200
-#存活检测设置
-verify:
-  #检查的URL
-  verifyUrl: 'https://www.google.com'
-  verifyUrlWords: 'Copyright The Closure Library Authors'
 #ip源
 spider:
   - name: 'proxy.ip3366.net'
@@ -238,25 +239,25 @@ spider:
     Headers:
       User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
     urls:
-      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/http.txt
-      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/https.txt
-      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/socks4.txt
-      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/socks5.txt
-      - https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/all/data.txt
-      - https://raw.githubusercontent.com/saisuiu/Lionkings-Http-Proxys-Proxies/refs/heads/main/free.txt
-      - https://raw.githubusercontent.com/saisuiu/Lionkings-Http-Proxys-Proxies/refs/heads/main/cnfree.txt
-      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/http.txt
+#      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/http.txt
+#      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/https.txt
+#      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/socks4.txt
+#      - https://raw.githubusercontent.com/ErcinDedeoglu/proxies/main/proxies/socks5.txt
+#      - https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/all/data.txt
+#      - https://raw.githubusercontent.com/saisuiu/Lionkings-Http-Proxys-Proxies/refs/heads/main/free.txt
+#      - https://raw.githubusercontent.com/saisuiu/Lionkings-Http-Proxys-Proxies/refs/heads/main/cnfree.txt
+#      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/http.txt
       - https://raw.githubusercontent.com/zloi-user/hideip.me/main/https.txt
-      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/socks4.txt
-      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/socks5.txt
+#      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/socks4.txt
+#      - https://raw.githubusercontent.com/zloi-user/hideip.me/main/socks5.txt
       - https://raw.githubusercontent.com/zloi-user/hideip.me/main/connect.txt
-      - https://raw.githubusercontent.com/Vauth/proxy/main/proxy.txt
-      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/http.txt
-      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/https.txt
-      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/socks4.txt
-      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/socks5.txt
-      - https://github.com/BreakingTechFr/Proxy_Free/blob/main/proxies/all.txt
-      - https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt
+#      - https://raw.githubusercontent.com/Vauth/proxy/main/proxy.txt
+#      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/http.txt
+#      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/https.txt
+#      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/socks4.txt
+#      - https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/socks5.txt
+#      - https://github.com/BreakingTechFr/Proxy_Free/blob/main/proxies/all.txt
+#      - https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt
     ip: '(\d+?\.\d+?.\d+?\.\d+?):\d+'
     port: '\d+?\.\d+?.\d+?\.\d+?:(\d+)'
     proxy: true

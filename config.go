@@ -20,6 +20,7 @@ type config struct {
 	Ip               string `yaml:"ip" json:"ip"`
 	Port             string `yaml:"port" json:"port"`
 	HttpTunnelPort   string `yaml:"httpTunnelPort" json:"httpTunnelPort"`
+	HttpsTunnelPort  string `yaml:"httpsTunnelPort" json:"httpsTunnelPort"`
 	SocketTunnelPort string `yaml:"socketTunnelPort" json:"socketTunnelPort"`
 	TunnelTime       int    `yaml:"tunnelTime" json:"tunnelTime"`
 	ProxyNum         int    `yaml:"proxyNum" json:"proxyNum"`

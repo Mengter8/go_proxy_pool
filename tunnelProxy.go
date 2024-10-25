@@ -14,18 +14,11 @@ import (
 )
 
 var lock2 sync.Mutex
-var httpI []ProxyIp
-var httpS []ProxyIp
-var socket5 []ProxyIp
-
 var httpIp string
 var httpsIp string
 var socket5Ip string
 
-func httpSRunTunnelProxyServer() {
-	httpsIp = getHttpsIp()
-	httpIp = gethttpIp()
-
+func httpRunTunnelProxyServer() {
 	log.Println("HTTP 隧道代理启动 - 监听IP端口 -> ", conf.Config.Ip+":"+conf.Config.HttpTunnelPort)
 
 	server := &http.Server{
@@ -34,7 +27,9 @@ func httpSRunTunnelProxyServer() {
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			if r.Method == http.MethodConnect {
+				httpsIp = getConnectIp()
 				log.Printf("隧道代理 | HTTPS 请求：%s 使用代理: %s", r.URL.String(), httpsIp)
+				httpsIp = "111.1.61.47:3128"
 				destConn, err := net.DialTimeout("tcp", httpsIp, 20*time.Second)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -70,6 +65,7 @@ func httpSRunTunnelProxyServer() {
 				go io.Copy(clientConn, destConn)
 
 			} else {
+				httpIp = getHttpIp()
 				log.Printf("隧道代理 | HTTP 请求：%s 使用代理: %s", r.URL.String(), httpIp)
 				tr := &http.Transport{
 					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -104,7 +100,6 @@ func httpSRunTunnelProxyServer() {
 				w.WriteHeader(res.StatusCode)
 				io.Copy(w, res.Body)
 				res.Body.Close()
-
 			}
 		}),
 	}
@@ -113,9 +108,38 @@ func httpSRunTunnelProxyServer() {
 		panic(err)
 	}
 }
+func httpsRunTunnelProxyServer() {
+	log.Println("HTTPS 隧道代理启动 - 监听IP端口 -> ", conf.Config.Ip+":"+conf.Config.HttpsTunnelPort)
+	li, err := net.Listen("tcp", conf.Config.Ip+":"+conf.Config.HttpsTunnelPort)
+	if err != nil {
+		log.Println(err)
+	}
+	for {
+		clientConn, err := li.Accept()
+		if err != nil {
+			log.Panic(err)
+		}
+		go func() {
+			socket5Ip = getConnectIp()
+			log.Printf("隧道代理 | Connect 请求 使用代理: %s", socket5Ip)
+			if clientConn == nil {
+				return
+			}
+			defer clientConn.Close()
+			destConn, err := net.DialTimeout("tcp", socket5Ip, 30*time.Second)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			defer destConn.Close()
 
+			go io.Copy(destConn, clientConn)
+			io.Copy(clientConn, destConn)
+		}()
+	}
+
+}
 func socket5RunTunnelProxyServer() {
-	socket5Ip = getSocket5Ip()
 	log.Println("SOCKET5 隧道代理启动 - 监听IP端口 -> ", conf.Config.Ip+":"+conf.Config.SocketTunnelPort)
 	li, err := net.Listen("tcp", conf.Config.Ip+":"+conf.Config.SocketTunnelPort)
 	if err != nil {
@@ -127,6 +151,7 @@ func socket5RunTunnelProxyServer() {
 			log.Panic(err)
 		}
 		go func() {
+			socket5Ip = getSocket5Ip()
 			log.Printf("隧道代理 | SOCKET5 请求 使用代理: %s", socket5Ip)
 			if clientConn == nil {
 				return
@@ -148,96 +173,6 @@ func socket5RunTunnelProxyServer() {
 
 // MergeArray 合并数组
 func MergeArray(dest []byte, src []byte) (result []byte) {
-	result = make([]byte, len(dest)+len(src))
-	//将第一个数组传入result
-	copy(result, dest)
-	//将第二个数组接在尾部，也就是 len(dest):
-	copy(result[len(dest):], src)
+	result = append(dest, src...)
 	return
-}
-
-func gethttpIp() string {
-	lock2.Lock()
-	defer lock2.Unlock()
-	if len(ProxyPool) == 0 {
-		return ""
-	}
-	for _, v := range ProxyPool {
-		if v.Protocol == "HTTP" {
-			is := true
-			for _, vv := range httpI {
-				if v.IPAddress == vv.IPAddress && v.Port == vv.Port {
-					is = false
-				}
-			}
-			if is {
-				httpI = append(httpI, v)
-				return v.IPAddress + ":" + v.Port
-			}
-		}
-	}
-	var addr string
-	if len(httpI) != 0 {
-		addr = httpI[0].IPAddress + ":" + httpI[0].Port
-	}
-	httpI = make([]ProxyIp, 0)
-	if addr == "" {
-		addr = httpsIp
-	}
-	return addr
-}
-
-func getHttpsIp() string {
-	lock2.Lock()
-	defer lock2.Unlock()
-	if len(ProxyPool) == 0 {
-		return ""
-	}
-	for _, v := range ProxyPool {
-		if v.Protocol == "HTTPS" {
-			is := true
-			for _, vv := range httpS {
-				if v.IPAddress == vv.IPAddress && v.Port == vv.Port {
-					is = false
-				}
-			}
-			if is {
-				httpS = append(httpS, v)
-				return v.IPAddress + ":" + v.Port
-			}
-		}
-	}
-	var addr string
-	if len(httpS) != 0 {
-		addr = httpS[0].IPAddress + ":" + httpS[0].Port
-	}
-	httpS = make([]ProxyIp, 0)
-	return addr
-}
-func getSocket5Ip() string {
-	lock2.Lock()
-	defer lock2.Unlock()
-	if len(ProxyPool) == 0 {
-		return ""
-	}
-	for _, v := range ProxyPool {
-		if v.Protocol == "SOCKET5" {
-			is := true
-			for _, vv := range socket5 {
-				if v.IPAddress == vv.IPAddress && v.Port == vv.Port {
-					is = false
-				}
-			}
-			if is {
-				socket5 = append(socket5, v)
-				return v.IPAddress + ":" + v.Port
-			}
-		}
-	}
-	var addr string
-	if len(socket5) != 0 {
-		addr = socket5[0].IPAddress + ":" + socket5[0].Port
-	}
-	socket5 = make([]ProxyIp, 0)
-	return addr
 }

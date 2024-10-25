@@ -18,7 +18,6 @@ func init() {
 }
 
 func main() {
-	//VerifyHttp("127.0.0.1:10809")
 	fmt.Println("           ___                     ___            _ " +
 		"\n ___  ___ | . " + "\\ _ _  ___ __   _ _ | . \\ ___  ___ | |" +
 		"\n/ . |/ . \\|  _/| '_>/ . \\\\ \\/| | ||  _// . \\/ . \\| |" +
@@ -26,7 +25,15 @@ func main() {
 		"\n<___'                        <___'                  ")
 	initSqlite()
 	InitData()
+	var a, b, c, d bool
+	a = VerifyProxy2("127.0.0.1:20171", "HTTP")
+	b = VerifyProxy2("127.0.0.1:20171", "HTTPS")
+	b = VerifyProxy2("127.0.0.1:20171", "HTTPS")
+	c = VerifyProxy2("127.0.0.1:20171", "CONNECT")
+	d = VerifyProxy2("127.0.0.1:20170", "SOCKET5")
+	log.Printf("http: %v, https: %v, connect: %v, socket5: %v", a, b, c, d)
 	//开启隧道代理
+	go httpRunTunnelProxyServer()
 	go httpsRunTunnelProxyServer()
 	go socket5RunTunnelProxyServer()
 	//启动webAPi
