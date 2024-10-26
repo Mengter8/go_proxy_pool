@@ -9,11 +9,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 )
 
-var lock2 sync.Mutex
 var httpIp string
 var httpsIp string
 var socket5Ip string
@@ -119,13 +117,13 @@ func httpsRunTunnelProxyServer() {
 			log.Panic(err)
 		}
 		go func() {
-			socket5Ip = getHttpsIp()
-			log.Printf("隧道代理 | Https 请求 使用代理: %s", socket5Ip)
+			httpsIp = getHttpsIp()
+			log.Printf("隧道代理 | Https 请求 使用代理: %s", httpsIp)
 			if clientConn == nil {
 				return
 			}
 			defer clientConn.Close()
-			destConn, err := net.DialTimeout("tcp", socket5Ip, 30*time.Second)
+			destConn, err := net.DialTimeout("tcp", httpsIp, 30*time.Second)
 			if err != nil {
 				log.Println(err)
 				return
