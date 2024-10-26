@@ -284,6 +284,7 @@ func VerifyProxy() {
 	wg3.Wait()
 	log.Printf("代理验证结束, 当前可用IP数: %d\n", len(ProxyPool))
 	cleanInvalidProxies()
+	loadProxyPool()
 	verifyIS = false
 }
 

@@ -45,7 +45,6 @@ func Run() {
 
 }
 func index(c *gin.Context) {
-	loadProxyPool()
 	home := Home{Sum: len(ProxyPool), Type: make(map[string]int), Anonymity: make(map[string]int), Country: make(map[string]int), Source: make(map[string]int), TunnelProxy: make(map[string]string)}
 	for i := range ProxyPool {
 		home.Type[ProxyPool[i].Protocol] += 1
