@@ -63,21 +63,21 @@ func updateProxyRecord(pi *ProxyIp) {
 	mu.Lock()
 	defer mu.Unlock()
 	updates := map[string]interface{}{
-		"LastChecked":  time.Now(),
-		"ResponseTime": pi.ResponseTime,
-		"IsWorking":    pi.IsWorking,
+		"last_checked":  time.Now(),
+		"response_time": pi.ResponseTime,
+		"is_working":    pi.IsWorking,
 	}
 
 	// 根据验证结果调整评分
 	if pi.IsWorking {
-		updates["Score"] = gorm.Expr("Score + 1")
+		updates["score"] = gorm.Expr("score + 1")
 	} else {
-		updates["Score"] = gorm.Expr("Score - 2")
+		updates["score"] = gorm.Expr("score - 2")
 	}
 
 	err := db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "ip_address"}, {Name: "port"}, {Name: "protocol"}},
-		DoUpdates: clause.AssignmentColumns([]string{"last_checked", "response_time", "is_working", "score"}),
+		DoUpdates: clause.Assignments(updates),
 	}).Create(pi).Error
 
 	if err != nil {
