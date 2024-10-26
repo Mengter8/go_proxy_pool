@@ -14,6 +14,7 @@ import (
 
 var httpIp string
 var httpsIp string
+var ConnectIp string
 var socket5Ip string
 
 func httpRunTunnelProxyServer() {
@@ -25,9 +26,9 @@ func httpRunTunnelProxyServer() {
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			if r.Method == http.MethodConnect {
-				httpsIp = getConnectIp()
-				log.Printf("隧道代理 | HTTPS 请求：%s 使用代理: %s", r.URL.String(), httpsIp)
-				destConn, err := net.DialTimeout("tcp", httpsIp, 20*time.Second)
+				ConnectIp = getConnectIp()
+				log.Printf("隧道代理 | HTTPS 请求：%s 使用代理: %s", r.URL.String(), ConnectIp)
+				destConn, err := net.DialTimeout("tcp", ConnectIp, 20*time.Second)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusServiceUnavailable)
 					return
