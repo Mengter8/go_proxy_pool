@@ -123,16 +123,8 @@ func httpsRunTunnelProxyServer() {
 				return
 			}
 			defer clientConn.Close()
-			destConn, err := net.DialTimeout("tcp", httpsIp, 30*time.Second)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			defer destConn.Close()
-
-			// 配置TLSClientConfig忽略证书认证
 			tlsConfig := &tls.Config{InsecureSkipVerify: true}
-			destConn, err = tls.DialWithDialer(&net.Dialer{Timeout: 30 * time.Second}, "tcp", socket5Ip, tlsConfig)
+			destConn, err := tls.DialWithDialer(&net.Dialer{Timeout: 30 * time.Second}, "tcp", httpsIp, tlsConfig)
 			if err != nil {
 				log.Println(err)
 				return
@@ -143,7 +135,6 @@ func httpsRunTunnelProxyServer() {
 			io.Copy(clientConn, destConn)
 		}()
 	}
-
 }
 func socket5RunTunnelProxyServer() {
 	log.Println("SOCKET5 隧道代理启动 - 监听IP端口 -> ", conf.Config.Ip+":"+conf.Config.SocketTunnelPort)
