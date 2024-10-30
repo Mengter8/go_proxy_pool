@@ -29,7 +29,7 @@ func Run() {
 	r.GET("/get", get)
 
 	//删除
-	r.GET("/delete", delete)
+	r.GET("/delete", deleteProxy)
 
 	//验证代理
 	r.GET("/verify", verify)
@@ -41,7 +41,11 @@ func Run() {
 	r.GET("/tunnelUpdate", tunnelUpdate)
 
 	log.Printf("webApi启动 - 监听IP端口 -> %s\n", conf.Config.Ip+":"+conf.Config.Port)
-	r.Run(conf.Config.Ip + ":" + conf.Config.Port)
+	err := r.Run(conf.Config.Ip + ":" + conf.Config.Port)
+	if err != nil {
+		log.Printf("webApi启动启动失败%v", err)
+		return
+	}
 
 }
 func index(c *gin.Context) {
@@ -109,14 +113,15 @@ func get(c *gin.Context) {
 	jsonStr := string(jsonByte)
 	c.String(200, jsonStr)
 }
-func delete(c *gin.Context) {
+func deleteProxy(c *gin.Context) {
 	if getProxyCount() == 0 {
 		c.String(200, fmt.Sprintf("{\"code\": 200, \"msg\": \"代理池是空的\"}"))
 		return
 	}
 	ip := c.Query("ip")
 	port := c.Query("port")
-	i := delIp(ip + ":" + port)
+	protocol := c.Query("protocol")
+	i := delProxy(ip, port, protocol)
 	c.String(200, fmt.Sprintf("{\"code\": 200, \"count\": %d}", i))
 }
 func verify(c *gin.Context) {
@@ -144,23 +149,6 @@ func tunnelUpdate(c *gin.Context) {
 	httpsIp = getHttpsIp()
 	httpIp = getHttpIp()
 	socket5Ip = getSocket5Ip()
-	c.String(200, fmt.Sprintf("{\"code\": 200, \"HTTP\": \"%s\",\"HTTPS\": \"%s\",\"SOCKET5\": \"%s\" }", httpIp, httpsIp, socket5Ip))
-}
-
-func delIp(addr string) int {
-	lock.Lock()
-	defer lock.Unlock()
-	var in int
-	ProxyPool := getAllProxyPool()
-	for i, v := range ProxyPool {
-		if v.IPAddress+":"+v.Port == addr {
-			in++
-			if i+1 < len(ProxyPool) {
-				ProxyPool = append(ProxyPool[:i], ProxyPool[i+1:]...)
-			} else {
-				ProxyPool = ProxyPool[:i]
-			}
-		}
-	}
-	return in
+	ConnectIp = getConnectIp()
+	c.String(200, fmt.Sprintf("{\"code\": 200, \"HTTP\": \"%s\",\"HTTPS\": \"%s\",\"SOCKET5\": \"%s\",\"CONNECT\": \"%s\" }", httpIp, httpsIp, socket5Ip, ConnectIp))
 }

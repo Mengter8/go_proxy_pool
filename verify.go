@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"golang.org/x/net/proxy"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -15,7 +17,6 @@ import (
 )
 
 var verifyIS = false
-var lock sync.Mutex
 var PublicIp = "0.0.0.0"
 
 func Verify(pi *ProxyIp, wg *sync.WaitGroup, ch chan int, first bool) {
@@ -72,8 +73,9 @@ func VerifyProxy2(proxyAddress string, protocol string) bool {
 			return false
 		}
 		tr = &http.Transport{
-			Dial:            dialer.Dial,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				return dialer.Dial(network, addr) // 使用 SOCKS5 的 Dial 方法
+			}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 	case "HTTP":
 		verifyPrefix = "http://"
@@ -133,32 +135,35 @@ func VerifyProxy2(proxyAddress string, protocol string) bool {
 		return false
 	}
 
-	res, err := client.Do(request)
+	response, err := client.Do(request)
 	if err != nil {
 		//log.Printf("代理请求失败: %v", err)
 		return false
 	}
-	defer res.Body.Close()
-
-	dataBytes, _ := io.ReadAll(res.Body)
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			log.Printf("关闭 response.Body 时出错: %v", err)
+		}
+	}()
+	dataBytes, _ := io.ReadAll(response.Body)
 	result := string(dataBytes)
 	return strings.Contains(result, conf.Config.VerifyUrlWords)
 }
 func Anonymity(pr *ProxyIp) string {
 	host := "http://httpbin.org/get"
-	var proxy string
+	var proxyAddress string
 
 	// 根据代理协议构造代理URL
 	if pr.Protocol == "SOCKET5" {
-		proxy = "socks5://" + pr.IPAddress + ":" + pr.Port
+		proxyAddress = "socks5://" + pr.IPAddress + ":" + pr.Port
 	} else if pr.Protocol == "HTTP" || pr.Protocol == "CONNECT" {
-		proxy = "http://" + pr.IPAddress + ":" + pr.Port
+		proxyAddress = "http://" + pr.IPAddress + ":" + pr.Port
 	} else if pr.Protocol == "HTTPS" {
-		proxy = "https://" + pr.IPAddress + ":" + pr.Port
+		proxyAddress = "https://" + pr.IPAddress + ":" + pr.Port
 	}
 
 	// 解析代理URL
-	proxyUrl, proxyErr := url.Parse(proxy)
+	proxyUrl, proxyErr := url.Parse(proxyAddress)
 	if proxyErr != nil {
 		log.Printf("解析代理URL失败: %v", proxyErr)
 		pr.IsWorking = false
@@ -173,22 +178,26 @@ func Anonymity(pr *ProxyIp) string {
 	client := http.Client{Timeout: 15 * time.Second, Transport: &tr}
 	request, err := http.NewRequest("GET", host, nil)
 	//处理返回结果
-	res, err := client.Do(request)
+	response, err := client.Do(request)
 	if err != nil {
-		//log.Printf("代理请求失败: %s %v", proxy, err)
+		//log.Printf("代理请求失败: %s %v", proxyAddress, err)
 		pr.IsWorking = false
 		return ""
 	}
-	defer res.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			log.Printf("关闭 response.Body 时出错: %v", err)
+		}
+	}()
 
 	// 读取响应体
-	dataBytes, _ := io.ReadAll(res.Body)
+	dataBytes, _ := io.ReadAll(response.Body)
 	result := string(dataBytes)
 
 	// 判断代理匿名性
 	arr := regexp.MustCompile(`"origin": "(.*)",`).FindStringSubmatch(result)
 	if len(arr) == 0 {
-		//log.Printf("响应不符合预期: %s %s", proxy, result)
+		//log.Printf("响应不符合预期: %s %s", proxyAddress, result)
 		pr.IsWorking = false
 		return ""
 	}
@@ -213,15 +222,19 @@ func getIpAddressInfo(IpAddres string) (string, string, string, string) {
 	}
 	client := http.Client{Timeout: 15 * time.Second, Transport: &tr}
 	//处理返回结果
-	res, err := client.Get("https://searchplugin.csdn.net/api/v1/ip/get?ip=" + IpAddres)
+	response, err := client.Get("https://searchplugin.csdn.net/api/v1/ip/get?ip=" + IpAddres)
 	if err != nil {
-		res, err = client.Get("https://searchplugin.csdn.net/api/v1/ip/get?ip=" + IpAddres)
+		response, err = client.Get("https://searchplugin.csdn.net/api/v1/ip/get?ip=" + IpAddres)
 		if err != nil {
 			return Isp, Country, Province, City
 		}
 	}
-	defer res.Body.Close()
-	dataBytes, _ := io.ReadAll(res.Body)
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			log.Printf("关闭 response.Body 时出错: %v", err)
+		}
+	}()
+	dataBytes, _ := io.ReadAll(response.Body)
 	result := string(dataBytes)
 	address := regexp.MustCompile("\"address\":\"(.+?)\",").FindAllStringSubmatch(result, -1)
 	if len(address) != 0 {
@@ -248,14 +261,17 @@ func getIpAddressInfo(IpAddres string) (string, string, string, string) {
 // 获取公网IP
 func getPublicIp() {
 	// 发起HTTP请求
-	resp, err := http.Get("http://myexternalip.com/raw")
+	response, err := http.Get("http://myexternalip.com/raw")
 	if err != nil {
 		fmt.Println("请求出错:", err)
 		return
 	}
-	defer resp.Body.Close()
-	// 读取响应内容
-	body, err := io.ReadAll(resp.Body)
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			log.Printf("关闭 response.Body 时出错: %v", err)
+		}
+	}()
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		fmt.Println("读取响应内容出错:", err)
 		return

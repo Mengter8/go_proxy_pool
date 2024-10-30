@@ -44,7 +44,11 @@ func initSqlite() {
 	}
 
 	// 自动迁移数据库结构
-	db.AutoMigrate(&ProxyIp{})
+	err = db.AutoMigrate(&ProxyIp{})
+	if err != nil {
+		log.Printf("自动迁移数据库结构失败:%v", err)
+		return
+	}
 }
 
 // 加载代理池
@@ -101,6 +105,27 @@ func cleanInvalidProxies() {
 		Delete(&ProxyIp{})
 
 	log.Println("失效代理已清理")
+}
+
+// 删除指定代理
+func delProxy(ipAddress string, port string, protocol string) error {
+	// 尝试删除指定条件的代理
+	result := db.Where("ip_address = ? AND port = ? AND protocol = ?", ipAddress, port, protocol).Delete(&ProxyIp{})
+
+	// 检查是否删除成功
+	if result.Error != nil {
+		log.Printf("删除代理失败：%v", result.Error)
+		return result.Error
+	}
+
+	// 检查受影响的行数
+	if result.RowsAffected == 0 {
+		log.Println("未找到符合条件的代理")
+		return fmt.Errorf("no proxy found with ip_address=%s, port=%s, protocol=%s", ipAddress, port, protocol)
+	}
+
+	log.Printf("已删除代理: %s:%s (%s)", ipAddress, port, protocol)
+	return nil
 }
 
 // 获取指定协议的代理IP
