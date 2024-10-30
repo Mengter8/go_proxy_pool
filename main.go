@@ -41,7 +41,7 @@ func InitData() {
 	ch1 = make(chan int, conf.Config.ThreadNum)
 	ch2 = make(chan int, conf.Config.ThreadNum)
 	//是否需要抓代理
-	if len(ProxyPool) < conf.Config.ProxyNum {
+	if getProxyCount() < conf.Config.ProxyNum {
 		//抓取代理
 		spiderRun()
 	}
@@ -50,7 +50,7 @@ func InitData() {
 		// 每 60 秒钟时执行一次
 		ticker := time.NewTicker(60 * time.Second)
 		for range ticker.C {
-			if len(ProxyPool) < conf.Config.ProxyNum {
+			if getProxyCount() < conf.Config.ProxyNum {
 				if !run {
 					log.Printf("代理数量不足 %d\n", conf.Config.ProxyNum)
 					//抓取代理

@@ -45,17 +45,24 @@ func initSqlite() {
 
 	// 自动迁移数据库结构
 	db.AutoMigrate(&ProxyIp{})
-
-	// 初始化代理池
-	loadProxyPool()
 }
 
 // 加载代理池
-func loadProxyPool() {
-	if err := db.Find(&ProxyPool).Error; err != nil {
+func getAllProxyPool() []ProxyIp {
+	var proxyPool []ProxyIp
+	if err := db.Find(&proxyPool).Error; err != nil {
 		log.Println("加载代理池失败：", err)
 		panic("failed to load proxy pool")
 	}
+	return proxyPool
+}
+func getProxyPool(isWorking bool) []ProxyIp {
+	var proxyPool []ProxyIp
+	if err := db.Where("is_working = ?", isWorking).Find(&proxyPool).Error; err != nil {
+		log.Println("加载代理池失败：", err)
+		panic("failed to load proxy pool")
+	}
+	return proxyPool
 }
 
 // 更新代理的评分、最后验证时间及工作状态
@@ -94,9 +101,6 @@ func cleanInvalidProxies() {
 		Delete(&ProxyIp{})
 
 	log.Println("失效代理已清理")
-
-	// 重新加载代理池
-	loadProxyPool()
 }
 
 // 获取指定协议的代理IP
@@ -143,4 +147,15 @@ func getSocket5Ip() string {
 }
 func getConnectIp() string {
 	return getProxyIp("CONNECT")
+}
+
+func getProxyCount() int {
+	mu.Lock()
+	defer mu.Unlock()
+	var count int64
+	// 只统计IsWorking为true的代理数量
+	if err := db.Model(&ProxyIp{}).Where("is_working = ?", true).Count(&count).Error; err != nil {
+		return 0
+	}
+	return int(count)
 }

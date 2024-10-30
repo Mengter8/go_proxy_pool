@@ -15,7 +15,6 @@ import (
 )
 
 var verifyIS = false
-var ProxyPool []ProxyIp
 var lock sync.Mutex
 var PublicIp = "0.0.0.0"
 
@@ -274,6 +273,7 @@ func VerifyProxy() {
 	verifyIS = true
 	log.Printf("开始验证代理存活情况")
 	getPublicIp()
+	ProxyPool := getAllProxyPool()
 	for i := range ProxyPool {
 		wg3.Add(1)
 		ch1 <- 1
@@ -284,7 +284,6 @@ func VerifyProxy() {
 	wg3.Wait()
 	log.Printf("代理验证结束, 当前可用IP数: %d\n", len(ProxyPool))
 	cleanInvalidProxies()
-	loadProxyPool()
 	verifyIS = false
 }
 

@@ -45,6 +45,7 @@ func Run() {
 
 }
 func index(c *gin.Context) {
+	ProxyPool := getProxyPool(true)
 	home := Home{Sum: len(ProxyPool), Type: make(map[string]int), Anonymity: make(map[string]int), Country: make(map[string]int), Source: make(map[string]int), TunnelProxy: make(map[string]string)}
 	for i := range ProxyPool {
 		home.Type[ProxyPool[i].Protocol] += 1
@@ -60,12 +61,13 @@ func index(c *gin.Context) {
 	c.String(200, jsonStr)
 }
 func get(c *gin.Context) {
-	if len(ProxyPool) == 0 {
+	if getProxyCount() == 0 {
 		c.String(200, fmt.Sprintf("{\"code\": 200, \"msg\": \"代理池是空的\"}"))
 		return
 	}
 	var prs []ProxyIp
 	var jsonByte []byte
+	ProxyPool := getProxyPool(true)
 	ty := c.DefaultQuery("type", "all")
 	an := c.DefaultQuery("anonymity", "all")
 	re := c.DefaultQuery("country", "all")
@@ -108,7 +110,7 @@ func get(c *gin.Context) {
 	c.String(200, jsonStr)
 }
 func delete(c *gin.Context) {
-	if len(ProxyPool) == 0 {
+	if getProxyCount() == 0 {
 		c.String(200, fmt.Sprintf("{\"code\": 200, \"msg\": \"代理池是空的\"}"))
 		return
 	}
@@ -136,7 +138,7 @@ func spiderUp(c *gin.Context) {
 }
 
 func tunnelUpdate(c *gin.Context) {
-	if len(ProxyPool) == 0 {
+	if getProxyCount() == 0 {
 		c.String(200, fmt.Sprintf("{\"code\": 200, \"msg\": \"代理池是空的\"}"))
 	}
 	httpsIp = getHttpsIp()
@@ -149,6 +151,7 @@ func delIp(addr string) int {
 	lock.Lock()
 	defer lock.Unlock()
 	var in int
+	ProxyPool := getAllProxyPool()
 	for i, v := range ProxyPool {
 		if v.IPAddress+":"+v.Port == addr {
 			in++
