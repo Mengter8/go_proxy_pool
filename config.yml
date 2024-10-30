@@ -8,7 +8,7 @@ config:
   #监听IP
   ip: 0.0.0.0
   #webApi监听端口
-  port: 8080
+  port: 81
   #http隧道代理端口
   httpTunnelPort: 3128
   #https隧道代理端口
@@ -220,6 +220,26 @@ spider:
     port: '>\d+?\.\d+?.\d+?\.\d+?:(\d+)#'
     proxy: true
 
+  - name: "lumiproxy.com"
+    method: 'GET'
+    Headers:
+      User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+    urls:
+      - https://www.lumiproxy.com/web_v1/free-proxy/list?page_size=1710&language=zh-hans
+    ip: '"ip":"(\d+?\.\d+?.\d+?\.\d+?)","port":\d+,"'
+    port: '"ip":"\d+?\.\d+?.\d+?\.\d+?","port":(\d+),"'
+    proxy: true
+
+  - name: "proxycompass.com"
+    method: 'GET'
+    Headers:
+      User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+    urls:
+      - https://proxycompass.com/wp-admin/admin-ajax.php?action=proxylister_download&nonce=ecad5472d7&format=txt&filter=%7B%7D
+    ip: '(\d+?\.\d+?.\d+?\.\d+?):\d+'
+    port: '\d+?\.\d+?.\d+?\.\d+?:(\d+)'
+    proxy: true
+
   - name: "proxy代理"
     method: 'GET'
     Headers:
@@ -233,8 +253,7 @@ spider:
     port: '\d+?\.\d+?.\d+?\.\d+?:(\d+)'
     proxy: true
 
-
-  - name: "github"
+  - name: "github.com"
     method: 'GET'
     Headers:
       User-Agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
