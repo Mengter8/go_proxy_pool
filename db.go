@@ -51,6 +51,15 @@ func initSqlite() {
 	}
 }
 
+// 加载代理池
+func getAllProxyPool() []ProxyIp {
+	var proxyPool []ProxyIp
+	if err := db.Find(&proxyPool).Error; err != nil {
+		log.Println("加载代理池失败：", err)
+		panic("failed to load proxy pool")
+	}
+	return proxyPool
+}
 func getProxyPool(isWorking bool) []ProxyIp {
 	var proxyPool []ProxyIp
 	if err := db.Where("is_working = ?", isWorking).Find(&proxyPool).Error; err != nil {
