@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+var wg3 sync.WaitGroup
+var ch1 = make(chan int, 50)
 var verifyIS = false
 var PublicIp = "0.0.0.0"
 

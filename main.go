@@ -4,12 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 	"time"
 )
-
-var wg3 sync.WaitGroup
-var ch1 = make(chan int, 50)
 
 func init() {
 	// 设置全局日志格式和输出
