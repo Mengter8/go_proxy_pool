@@ -10,6 +10,15 @@
 
 4.原版采用定时更换代理IP，更改为使用一次更换一次IP
 
+测试:
+```text
+curl --proxy 'http://127.0.0.1:3128' http://httpbin.org/get
+curl --proxy 'http://127.0.0.1:3128' https://httpbin.org/get
+curl --proxy 'http://127.0.0.1:443' http://httpbin.org/get
+curl --proxy 'http://127.0.0.1:443' https://httpbin.org/get
+curl -k --socks5 '127.0.0.1:1080' http://httpbin.org/get
+curl -k --socks5 '127.0.0.1:1080' https://httpbin.org/get
+```
 仅满足个人工作需要学习Goland，引用作者`遇到bug或有好的建议，欢迎提issue`
 # goProxyPool
 
