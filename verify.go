@@ -289,7 +289,7 @@ func VerifyProxy() {
 	verifyIS = true
 	log.Printf("开始验证代理存活情况")
 	getPublicIp()
-	ProxyPool := getAllProxyPool()
+	ProxyPool := getProxyPool(nil)
 	for i := range ProxyPool {
 		wg3.Add(1)
 		ch1 <- 1

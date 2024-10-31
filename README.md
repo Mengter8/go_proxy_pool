@@ -1,3 +1,16 @@
+作者仓库<https://github.com/pingc0y/go_proxy_pool>
+
+相较于作者仓库作了以下更改：
+
+1.更新免费代理源，代理源`urls`不再使用`,`分割，而采用数组
+
+2.原作者验证中采用http、connect和socket5，新增https验证
+
+3.json保存数据更改为sqlite，可稍微缓解代理池过大情况下的内存占用
+
+4.原版采用定时更换代理IP，更改为使用一次更换一次IP
+
+仅满足个人工作需要学习Goland，引用作者`遇到bug或有好的建议，欢迎提issue`
 # goProxyPool
 
 一款无环境依赖开箱即用的免费代理IP池   

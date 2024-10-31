@@ -130,7 +130,7 @@ func spiderPlugin(spp *SpiderPlugin) {
 		line := strings.Split(string(buf), ",")
 		for i := range line {
 			split := strings.Split(line[i], ":")
-			ProxyPool := getAllProxyPool()
+			ProxyPool := getProxyPool(nil)
 			for pi := range ProxyPool {
 				if ProxyPool[pi].IPAddress == split[0] && ProxyPool[pi].Port == split[1] {
 					_is = false
@@ -167,7 +167,7 @@ func spiderFile(spp *SpiderFile) {
 		line, err := r.ReadBytes('\n')
 		if len(line) > 0 {
 			split := strings.Split(strings.TrimSpace(string(line)), ":")
-			ProxyPool := getAllProxyPool()
+			ProxyPool := getProxyPool(nil)
 			for pi := range ProxyPool {
 				if ProxyPool[pi].IPAddress == split[0] && ProxyPool[pi].Port == split[1] {
 					_is = false
